@@ -1,0 +1,383 @@
+{
+  "version": 1,
+  "provenance": {
+    "analysis": "Deterministic sample analysis. No language model call.",
+    "retrieval": "Precomputed BM25 + pretrained BGE embeddings with RRF",
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "data": "Synthetic fixtures only"
+  },
+  "incidents": [
+    {
+      "id": "INC-1042",
+      "title": "Checkout errors after v2.8.0",
+      "service": "checkout-api",
+      "severity": "SEV 1",
+      "status": "Open",
+      "time": "14:32",
+      "description": "Checkout 5xx rate rose to 18% immediately after deployment v2.8.0. Investigate the connection failures.",
+      "kind": "pool",
+      "version": "v2.8.0",
+      "previous": "v2.7.4",
+      "metric": "18%",
+      "metric_label": "error rate",
+      "delta": "+17.7 pp",
+      "events": [
+        [
+          "14:28",
+          "Deployment",
+          "v2.8.0 rolled out to 8 replicas"
+        ],
+        [
+          "14:30",
+          "Configuration",
+          "DB_POOL_SIZE changed from 10 to 50"
+        ],
+        [
+          "14:32",
+          "Alert",
+          "5xx rate above 5% for 2 minutes"
+        ],
+        [
+          "14:34",
+          "Database",
+          "Active connections reached limit (200)"
+        ]
+      ],
+      "logs": [
+        "14:30:01 INFO release=v2.8.0 replicas=8 DB_POOL_SIZE=50",
+        "14:32:06 ERROR psycopg: remaining connection slots are reserved",
+        "14:32:08 ERROR checkout POST /pay status=503 duration_ms=5012",
+        "14:34:01 WARN database active_connections=200 max_connections=200"
+      ],
+      "change": "DB_POOL_SIZE increased from 10 to 50; replicas unchanged at 8."
+    },
+    {
+      "id": "INC-1041",
+      "title": "Orders queue is falling behind",
+      "service": "orders-worker",
+      "severity": "SEV 2",
+      "status": "Open",
+      "time": "13:18",
+      "description": "Orders backlog increased after v1.6.0. Worker logs show a downstream rate limit.",
+      "kind": "retry",
+      "version": "v1.6.0",
+      "previous": "v1.5.2",
+      "metric": "12.4k",
+      "metric_label": "queued jobs",
+      "delta": "+9.1k",
+      "events": [
+        [
+          "13:10",
+          "Deployment",
+          "v1.6.0 deployed"
+        ],
+        [
+          "13:12",
+          "Configuration",
+          "Retry backoff disabled"
+        ],
+        [
+          "13:18",
+          "Alert",
+          "Queue depth exceeded 10,000"
+        ],
+        [
+          "13:20",
+          "Dependency",
+          "Inventory API returned 429"
+        ]
+      ],
+      "logs": [
+        "13:12:00 INFO release=v1.6.0 RETRY_BACKOFF_MS=0",
+        "13:18:01 WARN queue_depth=12400 workers=12",
+        "13:20:03 ERROR inventory-api status=429 retry_after=30",
+        "13:20:03 WARN retry attempt=10 delay_ms=0"
+      ],
+      "change": "RETRY_BACKOFF_MS changed from 1000 to 0."
+    },
+    {
+      "id": "INC-1040",
+      "title": "Search latency is above SLO",
+      "service": "search-api",
+      "severity": "SEV 2",
+      "status": "Open",
+      "time": "11:46",
+      "description": "Search p95 latency increased. No relevant logs or release metadata have been captured yet.",
+      "kind": "unknown",
+      "version": "v3.1.1",
+      "previous": "v3.1.0",
+      "metric": "2.8s",
+      "metric_label": "p95 latency",
+      "delta": "+2.3s",
+      "events": [
+        [
+          "11:46",
+          "Alert",
+          "Search p95 exceeded 500ms SLO"
+        ],
+        [
+          "11:48",
+          "Telemetry",
+          "No diagnostic logs captured"
+        ]
+      ],
+      "logs": [
+        "11:48:00 INFO diagnostic capture unavailable; no evidence of root cause"
+      ],
+      "change": "Release metadata unavailable; do not infer a causal change."
+    }
+  ],
+  "documents": [
+    {
+      "id": "rb-pool",
+      "title": "Postgres connection pool runbook",
+      "service": "checkout-api",
+      "text": "When PostgreSQL reports remaining connection slots are reserved, inspect the total pool budget. Sum replicas multiplied by DB_POOL_SIZE and reserve headroom for migrations and administration. checkout-api uses 8 replicas and the database permits 200 connections. A pool of 10 per replica uses 80 slots; 50 per replica requests 400. Restore the previous pool configuration or roll back the release, then check error rate and active connections. Do not increase max_connections without reviewing memory limits."
+    },
+    {
+      "id": "rb-checkout",
+      "title": "Checkout deployment checklist",
+      "service": "checkout-api",
+      "text": "Before releasing checkout-api, validate database connectivity, execute a test payment, and inspect the configured DB_POOL_SIZE. Rollback requires operator approval. After rollback, compare 5xx rate and successful payment rate against the pre-release baseline. A rollback can mitigate an incident without proving its root cause."
+    },
+    {
+      "id": "past-pool",
+      "title": "Previous incident: connection saturation",
+      "service": "checkout-api",
+      "text": "A previous staging incident exhausted database connections after increasing worker replicas. The error was remaining connection slots are reserved. Reducing the aggregate connection pool restored availability. Verify all connection consumers when diagnosing a recurrence."
+    },
+    {
+      "id": "rb-retry",
+      "title": "Inventory API rate-limit runbook",
+      "service": "orders-worker",
+      "text": "If inventory-api returns 429 with Retry-After, honor the delay and use exponential backoff with jitter. Zero-delay retries can amplify throttling and grow the orders queue. Restore RETRY_BACKOFF_MS to at least 1000, review retry limits, and observe queue drain. Do not add workers while the dependency is throttling."
+    },
+    {
+      "id": "rb-queue",
+      "title": "Orders queue recovery",
+      "service": "orders-worker",
+      "text": "When queue depth rises, compare worker throughput, retry rate, and downstream errors. A growing queue alone does not establish a cause. Check retry configuration after a deployment. Roll back only after operator approval and verify jobs are idempotent before reprocessing."
+    },
+    {
+      "id": "rb-search",
+      "title": "Search latency investigation",
+      "service": "search-api",
+      "text": "High search latency has multiple possible causes: index changes, cache misses, query volume, or downstream failures. Collect traces, query timings, cache hit rate, and recent deploy metadata. Without these signals, report insufficient evidence rather than choosing a cause. Compare p95 latency with the 500ms SLO."
+    }
+  ],
+  "reports": {
+    "INC-1042": {
+      "report": {
+        "headline": "Connection pool budget exceeds database capacity",
+        "summary": "The release raised the per-replica pool to 50. Across 8 replicas that requests 400 connections against a 200-connection database limit. Captured logs show connection exhaustion. This is a supported hypothesis; mitigation still needs verification.",
+        "confidence": "Supported hypothesis",
+        "findings": [
+          {
+            "text": "The rollout changed DB_POOL_SIZE from 10 to 50 on 8 replicas.",
+            "sources": [
+              "deployment"
+            ]
+          },
+          {
+            "text": "PostgreSQL is rejecting connections at its 200-connection limit.",
+            "sources": [
+              "logs"
+            ]
+          },
+          {
+            "text": "The requested connection budget is 400; the previous configuration requested 80.",
+            "sources": [
+              "rb-pool"
+            ]
+          }
+        ],
+        "steps": [
+          "Restore DB_POOL_SIZE=10 or roll back to v2.7.4.",
+          "Observe database connections and checkout 5xx rate.",
+          "Confirm successful test payments before resolving the incident."
+        ],
+        "action": {
+          "type": "rollback",
+          "target": "v2.7.4",
+          "label": "Roll back checkout-api to v2.7.4"
+        },
+        "mode": "snapshot"
+      },
+      "evidence": [
+        {
+          "id": "deployment",
+          "title": "Deployment diff",
+          "text": "v2.7.4 \u2192 v2.8.0. DB_POOL_SIZE increased from 10 to 50; replicas unchanged at 8.",
+          "type": "deployment"
+        },
+        {
+          "id": "logs",
+          "title": "Captured application logs",
+          "text": "14:30:01 INFO release=v2.8.0 replicas=8 DB_POOL_SIZE=50\n14:32:06 ERROR psycopg: remaining connection slots are reserved\n14:32:08 ERROR checkout POST /pay status=503 duration_ms=5012\n14:34:01 WARN database active_connections=200 max_connections=200",
+          "type": "logs"
+        },
+        {
+          "id": "rb-pool",
+          "title": "Postgres connection pool runbook",
+          "service": "checkout-api",
+          "text": "When PostgreSQL reports remaining connection slots are reserved, inspect the total pool budget. Sum replicas multiplied by DB_POOL_SIZE and reserve headroom for migrations and administration. checkout-api uses 8 replicas and the database permits 200 connections. A pool of 10 per replica uses 80 slots; 50 per replica requests 400. Restore the previous pool configuration or roll back the release, then check error rate and active connections. Do not increase max_connections without reviewing memory limits.",
+          "chunk": 0,
+          "score": 0.03279,
+          "semantic_score": 0.8102,
+          "retrieval": "hybrid",
+          "embedding_model": "BAAI/bge-small-en-v1.5",
+          "type": "runbook"
+        },
+        {
+          "id": "rb-checkout",
+          "title": "Checkout deployment checklist",
+          "service": "checkout-api",
+          "text": "Before releasing checkout-api, validate database connectivity, execute a test payment, and inspect the configured DB_POOL_SIZE. Rollback requires operator approval. After rollback, compare 5xx rate and successful payment rate against the pre-release baseline. A rollback can mitigate an incident without proving its root cause.",
+          "chunk": 0,
+          "score": 0.032,
+          "semantic_score": 0.7456,
+          "retrieval": "hybrid",
+          "embedding_model": "BAAI/bge-small-en-v1.5",
+          "type": "runbook"
+        },
+        {
+          "id": "past-pool",
+          "title": "Previous incident: connection saturation",
+          "service": "checkout-api",
+          "text": "A previous staging incident exhausted database connections after increasing worker replicas. The error was remaining connection slots are reserved. Reducing the aggregate connection pool restored availability. Verify all connection consumers when diagnosing a recurrence.",
+          "chunk": 0,
+          "score": 0.032,
+          "semantic_score": 0.7735,
+          "retrieval": "hybrid",
+          "embedding_model": "BAAI/bge-small-en-v1.5",
+          "type": "runbook"
+        }
+      ]
+    },
+    "INC-1041": {
+      "report": {
+        "headline": "Zero-delay retries are amplifying downstream throttling",
+        "summary": "The release disabled retry backoff. Captured logs show inventory API 429 responses and immediate retries, consistent with the growing queue. Verify recovery after restoring backoff.",
+        "confidence": "Supported hypothesis",
+        "findings": [
+          {
+            "text": "RETRY_BACKOFF_MS was changed from 1000 to 0.",
+            "sources": [
+              "deployment"
+            ]
+          },
+          {
+            "text": "Inventory API returned 429 while workers retried with no delay.",
+            "sources": [
+              "logs"
+            ]
+          },
+          {
+            "text": "The runbook calls for honoring Retry-After and exponential backoff with jitter.",
+            "sources": [
+              "rb-retry"
+            ]
+          }
+        ],
+        "steps": [
+          "Restore the previous retry backoff configuration.",
+          "Honor Retry-After and check retry limits.",
+          "Observe queue drain and downstream error rates."
+        ],
+        "action": {
+          "type": "rollback",
+          "target": "v1.5.2",
+          "label": "Roll back orders-worker to v1.5.2"
+        },
+        "mode": "snapshot"
+      },
+      "evidence": [
+        {
+          "id": "deployment",
+          "title": "Deployment diff",
+          "text": "v1.5.2 \u2192 v1.6.0. RETRY_BACKOFF_MS changed from 1000 to 0.",
+          "type": "deployment"
+        },
+        {
+          "id": "logs",
+          "title": "Captured application logs",
+          "text": "13:12:00 INFO release=v1.6.0 RETRY_BACKOFF_MS=0\n13:18:01 WARN queue_depth=12400 workers=12\n13:20:03 ERROR inventory-api status=429 retry_after=30\n13:20:03 WARN retry attempt=10 delay_ms=0",
+          "type": "logs"
+        },
+        {
+          "id": "rb-retry",
+          "title": "Inventory API rate-limit runbook",
+          "service": "orders-worker",
+          "text": "If inventory-api returns 429 with Retry-After, honor the delay and use exponential backoff with jitter. Zero-delay retries can amplify throttling and grow the orders queue. Restore RETRY_BACKOFF_MS to at least 1000, review retry limits, and observe queue drain. Do not add workers while the dependency is throttling.",
+          "chunk": 0,
+          "score": 0.03279,
+          "semantic_score": 0.8246,
+          "retrieval": "hybrid",
+          "embedding_model": "BAAI/bge-small-en-v1.5",
+          "type": "runbook"
+        },
+        {
+          "id": "rb-queue",
+          "title": "Orders queue recovery",
+          "service": "orders-worker",
+          "text": "When queue depth rises, compare worker throughput, retry rate, and downstream errors. A growing queue alone does not establish a cause. Check retry configuration after a deployment. Roll back only after operator approval and verify jobs are idempotent before reprocessing.",
+          "chunk": 0,
+          "score": 0.03226,
+          "semantic_score": 0.8007,
+          "retrieval": "hybrid",
+          "embedding_model": "BAAI/bge-small-en-v1.5",
+          "type": "runbook"
+        }
+      ]
+    },
+    "INC-1040": {
+      "report": {
+        "headline": "Not enough evidence to identify a cause",
+        "summary": "The latency alert is real, but the captured evidence does not establish why it happened. Collect diagnostic signals before proposing a rollback.",
+        "confidence": "Insufficient evidence",
+        "findings": [
+          {
+            "text": "Diagnostic logs and causal release metadata are unavailable.",
+            "sources": [
+              "logs",
+              "deployment"
+            ]
+          }
+        ],
+        "steps": [
+          "Capture slow-request traces and query timings.",
+          "Collect cache hit rate and recent release metadata.",
+          "Compare latency and traffic before and after the alert."
+        ],
+        "action": null,
+        "mode": "snapshot"
+      },
+      "evidence": [
+        {
+          "id": "deployment",
+          "title": "Deployment diff",
+          "text": "v3.1.0 \u2192 v3.1.1. Release metadata unavailable; do not infer a causal change.",
+          "type": "deployment"
+        },
+        {
+          "id": "logs",
+          "title": "Captured application logs",
+          "text": "11:48:00 INFO diagnostic capture unavailable; no evidence of root cause",
+          "type": "logs"
+        },
+        {
+          "id": "rb-search",
+          "title": "Search latency investigation",
+          "service": "search-api",
+          "text": "High search latency has multiple possible causes: index changes, cache misses, query volume, or downstream failures. Collect traces, query timings, cache hit rate, and recent deploy metadata. Without these signals, report insufficient evidence rather than choosing a cause. Compare p95 latency with the 500ms SLO.",
+          "chunk": 0,
+          "score": 0.03279,
+          "semantic_score": 0.8234,
+          "retrieval": "hybrid",
+          "embedding_model": "BAAI/bge-small-en-v1.5",
+          "type": "runbook"
+        }
+      ]
+    }
+  }
+}

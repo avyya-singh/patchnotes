@@ -1,0 +1,28 @@
+{
+  "mode": "deterministic demo",
+  "cases": 3,
+  "results": [
+    {
+      "incident": "INC-1042",
+      "expected_runbook_in_top4": true,
+      "valid_citation_ids": true,
+      "expected_uncertainty": true,
+      "latency_ms": 1452
+    },
+    {
+      "incident": "INC-1041",
+      "expected_runbook_in_top4": true,
+      "valid_citation_ids": true,
+      "expected_uncertainty": true,
+      "latency_ms": 256
+    },
+    {
+      "incident": "INC-1040",
+      "expected_runbook_in_top4": true,
+      "valid_citation_ids": true,
+      "expected_uncertainty": true,
+      "latency_ms": 223
+    }
+  ],
+  "note": "Three controlled fixtures; citation ID validity does not measure entailment. No LLM or production data."
+}

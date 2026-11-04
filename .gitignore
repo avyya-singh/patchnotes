@@ -1,0 +1,12 @@
+node_modules/
+frontend/dist/
+data/
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.tsbuildinfo
+.terraform/
+*.tfstate*
+frontend/dist-demo/

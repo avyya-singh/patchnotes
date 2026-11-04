@@ -1,0 +1,26 @@
+services:
+  patchnotes:
+    build: .
+    ports:
+      - "127.0.0.1:4180:8000"
+    environment:
+      PATCHNOTES_MODE: ${PATCHNOTES_MODE:-demo}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:8b}
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - patchnotes-data:/app/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+volumes:
+  patchnotes-data:
