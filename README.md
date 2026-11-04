@@ -1,5 +1,7 @@
 # PatchNotes
 
+**[Live demo](https://patchnotes.vercel.app)** · **[Source code](https://github.com/avyya-singh/patchnotes)**
+
 An incident investigation workspace built with React, TypeScript, FastAPI, LangChain, LangGraph, and pretrained semantic retrieval. Designed as a personal portfolio project with a zero-cost public demo and a separate full local application.
 
 ## Two explicit modes
@@ -131,8 +133,9 @@ The local Python app is a single-user, single-process workspace. Service filteri
 - Verified: semantic embeddings/retrieval, seven backend tests, static adapter test, both frontend builds, and public-demo browser flows.
 - Published source: https://github.com/avyya-singh/patchnotes
 - Verified on GitHub CI: backend tests, evaluation, frontend tests, both builds, Docker build, and container health check.
-- Prepared: Vercel static deployment configuration; account authorization is pending.
-- Not yet verified: live Ollama inference or actual public Vercel deployment.
+- Published and browser-verified: https://patchnotes.vercel.app — static demo on Vercel Hobby, accessible without login.
+- GitHub automatic redeployment is not connected yet. In Vercel Project Settings → Git, authorize/connect `avyya-singh/patchnotes` to enable it. Manual CLI deployment works.
+- Not yet verified: live Ollama inference on the user's computer.
 
 ## References
 

@@ -32,6 +32,8 @@ The full Python app remains separate. It supports real runtime semantic retrieva
 
 ## Deployment status
 
-The static build and local browser demo are verified. A Vercel URL cannot be created until the user signs into Vercel and imports the GitHub repository. No public URL or successful cloud deployment is claimed by this file.
+The public demo is live at https://patchnotes.vercel.app on Vercel Hobby. Anonymous HTTP requests and the browser investigation/citation/approval flow are verified. The Python API is not deployed; `/api/health` returns 404 as expected for the static build.
+
+The project is under `audreystark54-gmailcoms-projects/patchnotes`. GitHub automatic deployment is not yet connected: the Vercel CLI Git connection attempt was rejected. To enable it, sign into Vercel and open Project Settings → Git, then authorize access to `avyya-singh/patchnotes`. This does not affect the already-public URL. Until connected, use `vercel deploy --prod` with the correct project/account settings to publish changes manually.
 
 Official references: https://vercel.com/docs/plans/hobby and https://vercel.com/docs/deployments/git
