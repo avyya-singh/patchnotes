@@ -6,7 +6,7 @@ This deployment is a static React site. It needs no model API key, database, Pyt
 
 Create an empty public repository named `patchnotes` under `avyya-singh`. Upload the source at the repository root, including the hidden `.github` directory, `vercel.json`, `frontend/public/demo-data.json`, and `frontend/.env.demo`. Do not upload `data/`, `.venv/`, `.env`, or `node_modules/`.
 
-The initial repository is local. The connected GitHub tools cannot create a new repository; the GitHub browser and local CLI were signed out/invalid during setup. Once the empty repository exists, its source can be pushed through the connected GitHub tools.
+The source is published at https://github.com/avyya-singh/patchnotes, with commits authored and committed by avyya-singh. GitHub CI has passed.
 
 ## 2. Vercel
 

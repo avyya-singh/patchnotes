@@ -108,7 +108,7 @@ Set `PATCHNOTES_DATA` to an isolated directory for tests/evaluation. Optionally 
 docker compose up --build
 ```
 
-Visit http://127.0.0.1:4180. Docker Compose keeps SQLite data in a named volume and binds only to localhost. The Docker engine was stopped on the original machine, so container execution is unverified. It is not required for the free Vercel demo.
+Visit http://127.0.0.1:4180. Docker Compose keeps SQLite data in a named volume and binds only to localhost. Docker build and container startup/health are verified by GitHub CI on Linux. It is not required for the free Vercel demo.
 
 The GitHub Actions workflow runs Python tests, the small evaluation, frontend adapter tests, both builds, a Docker build, and a health smoke test. It runs only after the repository is pushed to GitHub. Vercel's Git integration handles static deployment. No Azure or paid-cloud deployment workflow is included.
 
@@ -129,9 +129,10 @@ The local Python app is a single-user, single-process workspace. Service filteri
 ## Project status
 
 - Verified: semantic embeddings/retrieval, seven backend tests, static adapter test, both frontend builds, and public-demo browser flows.
-- Prepared: GitHub source and Vercel static deployment configuration.
-- Requires user account setup: empty GitHub repository, Vercel sign-in/import.
-- Not yet verified: live Ollama inference, Docker execution, GitHub-hosted CI, or actual public Vercel deployment.
+- Published source: https://github.com/avyya-singh/patchnotes
+- Verified on GitHub CI: backend tests, evaluation, frontend tests, both builds, Docker build, and container health check.
+- Prepared: Vercel static deployment configuration; account authorization is pending.
+- Not yet verified: live Ollama inference or actual public Vercel deployment.
 
 ## References
 
